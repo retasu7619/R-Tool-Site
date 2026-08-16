@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>読書感想文テンプレート</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+
+<body>
+
+
+<!-- ==================================================
+     固定ヘッダー
+================================================== -->
+
+<header class="app-header">
+
+    <!-- タイトル -->
+
+    <div class="header-title">
+
+        <h1>
+            読書感想文テンプレート
+        </h1>
+
+        <div
+            id="save-status"
+            class="save-status loading"
+        >
+            起動中...
+        </div>
+
+    </div>
+
+
+    <!-- 全体文字数 -->
+
+    <div class="header-progress">
+
+        <div class="progress-info">
+
+            <span
+                id="total-count"
+                class="total-count"
+            >
+                0 / 2000字
+            </span>
+
+            <span
+                id="total-percentage"
+                class="total-percentage"
+            >
+                0%
+            </span>
+
+            <span
+                id="total-status"
+                class="essay-status short"
+            >
+                短め
+            </span>
+
+        </div>
+
+
+        <div
+            id="total-progress"
+            class="progress-bar"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- 操作ボタン -->
+
+    <div class="header-buttons">
+
+        <button
+            id="save-button"
+            type="button"
+        >
+            💾 保存
+        </button>
+
+
+        <button
+            id="load-button"
+            type="button"
+        >
+            📂 呼び出し
+        </button>
+
+
+        <button
+            id="reset-button"
+            type="button"
+        >
+            🗑 全リセット
+        </button>
+
+    </div>
+
+</header>
+
+
+
+<!-- ==================================================
+     メイン
+================================================== -->
+
+<main class="main-container">
+
+
+    <!-- ==================================================
+         説明
+    ================================================== -->
+
+    <section class="intro-card">
+
+        <h2>
+            読書感想文を書こう
+        </h2>
+
+        <p>
+            このテンプレートでは、読書感想文を5つの章に分けて書いていきます。
+        </p>
+
+        <p>
+            文字数は入力すると自動的に計算され、
+            各章の目標文字数と現在の状態を確認できます。
+        </p>
+
+        <p>
+            文章は自動保存されますが、
+            大切な文章は「保存」ボタンでも保存してください。
+        </p>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         提出条件設定
+    ================================================== -->
+
+    <section class="condition-card">
+
+        <div class="section-heading">
+
+            <div>
+
+                <h2>
+                    提出条件
+                </h2>
+
+                <p>
+                    学校や先生から指定された文字数に合わせて変更できます。
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="settings-grid">
+
+
+            <!-- 下限 -->
+
+            <label>
+
+                <span>
+                    下限
+                </span>
+
+                <div class="number-input">
+
+                    <input
+                        id="min-chars"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="1800"
+                    >
+
+                    <span>
+                        字
+                    </span>
+
+                </div>
+
+            </label>
+
+
+
+            <!-- 目標 -->
+
+            <label>
+
+                <span>
+                    目標
+                </span>
+
+                <div class="number-input">
+
+                    <input
+                        id="target-chars"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="1900"
+                    >
+
+                    <span>
+                        字
+                    </span>
+
+                </div>
+
+            </label>
+
+
+
+            <!-- 上限 -->
+
+            <label>
+
+                <span>
+                    上限
+                </span>
+
+                <div class="number-input">
+
+                    <input
+                        id="max-chars"
+                        type="number"
+                        min="0"
+                        step="1"
+                        value="2000"
+                    >
+
+                    <span>
+                        字
+                    </span>
+
+                </div>
+
+            </label>
+
+
+
+            <!-- 適用 -->
+
+            <button
+                id="apply-settings"
+                type="button"
+            >
+                条件を適用
+            </button>
+
+        </div>
+
+
+
+        <!-- 設定内容 -->
+
+        <div class="condition-summary">
+
+            <span>
+
+                下限：
+
+                <strong id="condition-min">
+                    1800字
+                </strong>
+
+            </span>
+
+
+            <span>
+
+                目標：
+
+                <strong id="condition-target">
+                    1900字
+                </strong>
+
+            </span>
+
+
+            <span>
+
+                上限：
+
+                <strong id="condition-max">
+                    2000字
+                </strong>
+
+            </span>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         第1章
+    ================================================== -->
+
+    <section class="chapter-card">
+
+        <div class="chapter-header">
+
+            <div class="chapter-title-area">
+
+                <span class="chapter-number">
+                    第1章
+                </span>
+
+                <h2>
+                    導入
+                </h2>
+
+                <p>
+                    読む前の自分・本を読もうと思ったきっかけ
+                </p>
+
+            </div>
+
+
+            <div class="chapter-info">
+
+                <div class="chapter-target">
+
+                    <span id="chapter-1-target">
+                        目標 約285字
+                    </span>
+
+                </div>
+
+
+                <span id="chapter-1-count">
+                    0字
+                </span>
+
+
+                <span
+                    id="chapter-1-status"
+                    class="chapter-status short"
+                >
+                    短め
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="chapter-1-progress"
+            class="progress-bar chapter-progress"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+
+        <textarea
+            id="chapter-1"
+            class="essay-input"
+            placeholder="この本を読もうと思ったきっかけや、読む前の自分について書いてみよう。"
+            spellcheck="false"
+        ></textarea>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         第2章
+    ================================================== -->
+
+    <section class="chapter-card">
+
+        <div class="chapter-header">
+
+            <div class="chapter-title-area">
+
+                <span class="chapter-number">
+                    第2章
+                </span>
+
+                <h2>
+                    引用と発見
+                </h2>
+
+                <p>
+                    一行の引用・印象に残った言葉・語彙の深掘り
+                </p>
+
+            </div>
+
+
+            <div class="chapter-info">
+
+                <div class="chapter-target">
+
+                    <span id="chapter-2-target">
+                        目標 約380字
+                    </span>
+
+                </div>
+
+
+                <span id="chapter-2-count">
+                    0字
+                </span>
+
+
+                <span
+                    id="chapter-2-status"
+                    class="chapter-status short"
+                >
+                    短め
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="chapter-2-progress"
+            class="progress-bar chapter-progress"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+
+        <textarea
+            id="chapter-2"
+            class="essay-input"
+            placeholder="本の中で特に印象に残った言葉や文章について、その理由や意味を考えてみよう。"
+            spellcheck="false"
+        ></textarea>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         第3章
+    ================================================== -->
+
+    <section class="chapter-card">
+
+        <div class="chapter-header">
+
+            <div class="chapter-title-area">
+
+                <span class="chapter-number">
+                    第3章
+                </span>
+
+                <h2>
+                    考察
+                </h2>
+
+                <p>
+                    本 × 伝統文化・背景・作品についての分析
+                </p>
+
+            </div>
+
+
+            <div class="chapter-info">
+
+                <div class="chapter-target">
+
+                    <span id="chapter-3-target">
+                        目標 約475字
+                    </span>
+
+                </div>
+
+
+                <span id="chapter-3-count">
+                    0字
+                </span>
+
+
+                <span
+                    id="chapter-3-status"
+                    class="chapter-status short"
+                >
+                    短め
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="chapter-3-progress"
+            class="progress-bar chapter-progress"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+
+        <textarea
+            id="chapter-3"
+            class="essay-input"
+            placeholder="本に描かれている文化や背景、登場人物、出来事などについて、自分なりに考えてみよう。"
+            spellcheck="false"
+        ></textarea>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         第4章
+    ================================================== -->
+
+    <section class="chapter-card">
+
+        <div class="chapter-header">
+
+            <div class="chapter-title-area">
+
+                <span class="chapter-number">
+                    第4章
+                </span>
+
+                <h2>
+                    比較
+                </h2>
+
+                <p>
+                    本 × 自分の体験・経験・失敗談
+                </p>
+
+            </div>
+
+
+            <div class="chapter-info">
+
+                <div class="chapter-target">
+
+                    <span id="chapter-4-target">
+                        目標 約475字
+                    </span>
+
+                </div>
+
+
+                <span id="chapter-4-count">
+                    0字
+                </span>
+
+
+                <span
+                    id="chapter-4-status"
+                    class="chapter-status short"
+                >
+                    短め
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="chapter-4-progress"
+            class="progress-bar chapter-progress"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+
+        <textarea
+            id="chapter-4"
+            class="essay-input"
+            placeholder="本の内容と自分自身の経験を比べて、似ているところや違うところを考えてみよう。"
+            spellcheck="false"
+        ></textarea>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         第5章
+    ================================================== -->
+
+    <section class="chapter-card">
+
+        <div class="chapter-header">
+
+            <div class="chapter-title-area">
+
+                <span class="chapter-number">
+                    第5章
+                </span>
+
+                <h2>
+                    結び
+                </h2>
+
+                <p>
+                    変化した自分・これからの覚悟
+                </p>
+
+            </div>
+
+
+            <div class="chapter-info">
+
+                <div class="chapter-target">
+
+                    <span id="chapter-5-target">
+                        目標 約285字
+                    </span>
+
+                </div>
+
+
+                <span id="chapter-5-count">
+                    0字
+                </span>
+
+
+                <span
+                    id="chapter-5-status"
+                    class="chapter-status short"
+                >
+                    短め
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="chapter-5-progress"
+            class="progress-bar chapter-progress"
+        >
+
+            <div
+                class="progress-fill short"
+            ></div>
+
+        </div>
+
+
+        <textarea
+            id="chapter-5"
+            class="essay-input"
+            placeholder="この本を読んで自分がどう変わったのか、これからどうしていきたいのかを書いてみよう。"
+            spellcheck="false"
+        ></textarea>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         原稿用紙プレビュー
+    ================================================== -->
+
+    <section class="manuscript-preview-card">
+
+        <div class="preview-header">
+
+            <div>
+
+                <h2>
+                    原稿用紙プレビュー
+                </h2>
+
+                <p>
+                    書いた文章を400字詰め原稿用紙のレイアウトで確認できます。
+                </p>
+
+            </div>
+
+
+            <div class="preview-actions">
+
+                <button
+                    id="preview-button"
+                    type="button"
+                >
+                    ↻ 原稿用紙を更新
+                </button>
+
+
+                <button
+                    id="print-button"
+                    type="button"
+                >
+                    🖨 印刷プレビュー
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- 原稿用紙 -->
+
+        <div
+            id="manuscript-pages"
+            class="manuscript-pages"
+        >
+
+            <div class="manuscript-empty">
+
+                <p>
+                    「原稿用紙を更新」を押すと、
+                    ここに原稿用紙が表示されます。
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         フッター
+    ================================================== -->
+
+    <footer class="app-footer">
+
+        <p>
+            読書感想文を書く学生を応援するための非公式ツールです。
+        </p>
+
+        <p>
+            実際の提出条件については、学校・先生からの指示を必ず確認してください。
+        </p>
+
+    </footer>
+
+
+</main>
+
+
+
+<!-- ==================================================
+     JavaScript
+================================================== -->
+
+<script src="js/config.js"></script>
+
+<script src="js/db.js"></script>
+
+<script src="js/essay.js"></script>
+
+<script src="js/manuscript.js"></script>
+
+<script src="js/ui.js"></script>
+
+<script src="js/app.js"></script>
+
+
+</body>
+
+</html>
