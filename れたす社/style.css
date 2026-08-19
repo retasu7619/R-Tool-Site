@@ -663,6 +663,23 @@ body {
 }
 
 /* 給与明細 */
+.salary-layout,
+.evaluation-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.salary-layout > *,
+.evaluation-layout > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.salary-layout .payslip {
+  max-width: none;
+}
+
 .payslip {
   max-width: 600px;
 }

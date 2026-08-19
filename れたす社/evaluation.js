@@ -32,7 +32,7 @@ const EvaluationModule = (() => {
 
     const content = document.getElementById('evaluation-content');
     content.innerHTML = `
-      <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+      <div class="evaluation-layout">
         <div class="card" style="text-align:center">
           <div class="card-label">評価ポイント</div>
           <div class="eval-point-display">

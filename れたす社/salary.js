@@ -137,7 +137,7 @@ const SalaryModule = (() => {
     const expenses = DB.Wallet.getExpenses().filter(expense => expense.date.startsWith(`${year}-${String(month).padStart(2, '0')}`));
 
     document.getElementById('salary-content').innerHTML = `
-      <div style="display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start">
+      <div class="salary-layout">
         <div class="payslip card">
           <div class="payslip-header">
             <div class="payslip-title">${monthLabel}　給与明細</div>
