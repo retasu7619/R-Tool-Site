@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VirtualWork — 仮想会社管理システム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ナビゲーション -->
+    <nav id="main-nav">
+      <div class="nav-brand">
+        <span class="brand-icon">⬡</span>
+        <span class="brand-name">VirtualWork</span>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" data-page="dashboard">ダッシュボード</button>
+        <button class="nav-btn" data-page="attendance">勤怠</button>
+        <button class="nav-btn" data-page="schedule">勤務予定</button>
+        <button class="nav-btn" data-page="work-blocks">業務ブロック</button>
+        <button class="nav-btn" data-page="salary">給与</button>
+        <button class="nav-btn" data-page="evaluation">評価</button>
+        <button class="nav-btn" data-page="regulations">会社規程</button>
+        <button class="nav-btn" data-page="settings">設定</button>
+      </div>
+      <div class="nav-status" id="nav-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">未出勤</span>
+      </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main id="main-content">
+      <!-- ダッシュボード -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1>ダッシュボード</h1>
+          <div class="today-date" id="today-date"></div>
+        </div>
+
+        <!-- 未確定勤務アラート -->
+        <div class="alert alert-warning hidden" id="unconfirmed-alert">
+          <span class="alert-icon">⚠</span>
+          <div>
+            <strong>未確定の勤務があります</strong>
+            <p id="unconfirmed-message"></p>
+          </div>
+          <button class="btn btn-warning" id="confirm-attendance-btn">確認する</button>
+        </div>
+
+        <!-- 出勤ステータスカード -->
+        <div class="dashboard-grid">
+          <div class="card card-primary" id="clock-card">
+            <div class="card-label">現在時刻</div>
+            <div class="card-value clock" id="live-clock">--:--:--</div>
+            <div class="clock-actions" id="clock-actions">
+              <button class="btn btn-success btn-lg" id="btn-clockin">出勤</button>
+            </div>
+            <div class="work-status hidden" id="work-status">
+              <div class="status-row">
+                <span class="label">出勤時刻</span>
+                <span id="clockin-time">--:--:--</span>
+              </div>
+              <div class="status-row">
+                <span class="label">勤務時間</span>
+                <span id="elapsed-time">0:00:00</span>
+              </div>
+              <div class="status-row" id="plan-status-row">
+                <span class="label">業務計画</span>
+                <span id="plan-status">未入力</span>
+              </div>
+              <button class="btn btn-danger btn-lg mt-1" id="btn-clockout">退勤</button>
+            </div>
+          </div>
+
+          <!-- 今日の予定 -->
+          <div class="card" id="today-schedule-card">
+            <div class="card-label">本日の勤務予定</div>
+            <div id="today-schedule-content">
+              <p class="text-muted">予定なし</p>
+            </div>
+          </div>
+
+          <!-- 今月サマリー -->
+          <div class="card" id="month-summary-card">
+            <div class="card-label" id="month-label">今月のサマリー</div>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-num" id="month-work-days">0</div>
+                <div class="summary-label">勤務日数</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num" id="month-work-hours">0h</div>
+                <div class="summary-label">勤務時間</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num" id="month-salary-est">¥0</div>
+                <div class="summary-label">給与予測</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num" id="month-eval-pts">100pt</div>
+                <div class="summary-label">評価ポイント</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 今月の給与予測詳細 -->
+          <div class="card" id="salary-forecast-card">
+            <div class="card-label">給与予測（今月）</div>
+            <div id="salary-forecast-content">
+              <div class="forecast-row">
+                <span>基本給与予想</span>
+                <span id="fc-base">¥0</span>
+              </div>
+              <div class="forecast-row">
+                <span>時間外報酬予想</span>
+                <span id="fc-overtime">¥0</span>
+              </div>
+              <div class="forecast-row">
+                <span>評価報酬予想</span>
+                <span id="fc-eval">¥0</span>
+              </div>
+              <div class="forecast-row forecast-total">
+                <span>予想総支給</span>
+                <span id="fc-total">¥0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近の勤怠記録 -->
+        <div class="card mt-1">
+          <div class="card-label">最近の勤怠記録</div>
+          <table class="data-table" id="recent-attendance-table">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>出勤</th>
+                <th>退勤</th>
+                <th>勤務時間</th>
+                <th>時間外</th>
+                <th>評価</th>
+                <th>状態</th>
+              </tr>
+            </thead>
+            <tbody id="recent-attendance-body">
+              <tr><td colspan="7" class="text-center text-muted">記録なし</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 勤怠ページ -->
+      <div class="page hidden" id="page-attendance">
+        <div class="page-header">
+          <h1>勤怠管理</h1>
+        </div>
+        <div class="filter-bar">
+          <select id="attendance-year" class="select-input"></select>
+          <select id="attendance-month" class="select-input"></select>
+          <button class="btn btn-secondary" id="attendance-filter-btn">表示</button>
+        </div>
+        <div class="card">
+          <table class="data-table" id="attendance-table">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>曜日</th>
+                <th>出勤</th>
+                <th>退勤</th>
+                <th>遅刻</th>
+                <th>勤務時間</th>
+                <th>時間外</th>
+                <th>業務計画</th>
+                <th>振り返り</th>
+                <th>評価</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-body">
+              <tr><td colspan="11" class="text-center text-muted">記録なし</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 勤務予定ページ -->
+      <div class="page hidden" id="page-schedule">
+        <div class="page-header">
+          <h1>勤務予定</h1>
+          <button class="btn btn-primary" id="add-schedule-btn">＋ 予定を追加</button>
+        </div>
+        <div class="schedule-view">
+          <div class="card">
+            <div class="card-label">通常勤務予定</div>
+            <div id="regular-schedule-list"></div>
+          </div>
+          <div class="card mt-1">
+            <div class="card-label">予定時間外勤務</div>
+            <div id="overtime-schedule-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 業務ブロックページ -->
+      <div class="page hidden" id="page-work-blocks">
+        <div class="page-header">
+          <h1>業務ブロック</h1>
+        </div>
+        <div class="filter-bar">
+          <input type="date" id="wb-date-filter" class="input-field">
+          <button class="btn btn-secondary" id="wb-filter-btn">表示</button>
+        </div>
+        <div id="work-blocks-content"></div>
+      </div>
+
+      <!-- 給与ページ -->
+      <div class="page hidden" id="page-salary">
+        <div class="page-header">
+          <h1>給与明細</h1>
+        </div>
+        <div class="filter-bar">
+          <select id="salary-year" class="select-input"></select>
+          <select id="salary-month" class="select-input"></select>
+          <button class="btn btn-secondary" id="salary-filter-btn">表示</button>
+        </div>
+        <div id="salary-content"></div>
+      </div>
+
+      <!-- 評価ページ -->
+      <div class="page hidden" id="page-evaluation">
+        <div class="page-header">
+          <h1>評価・ポイント</h1>
+        </div>
+        <div class="filter-bar">
+          <select id="eval-year" class="select-input"></select>
+          <select id="eval-month" class="select-input"></select>
+          <button class="btn btn-secondary" id="eval-filter-btn">表示</button>
+        </div>
+        <div id="evaluation-content"></div>
+      </div>
+
+      <!-- 会社規程ページ -->
+      <div class="page hidden" id="page-regulations">
+        <div class="page-header">
+          <h1>会社規程</h1>
+          <div class="version-badge" id="reg-version-badge"></div>
+        </div>
+        <div id="regulations-content"></div>
+      </div>
+
+      <!-- 設定ページ -->
+      <div class="page hidden" id="page-settings">
+        <div class="page-header">
+          <h1>設定</h1>
+        </div>
+        <div id="settings-content"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- モーダル群 -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal" id="modal-container">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="regulations.js"></script>
+  <script src="salary.js"></script>
+  <script src="evaluation.js"></script>
+  <script src="attendance.js"></script>
+  <script src="schedule.js"></script>
+  <script src="workblocks.js"></script>
+  <script src="ui.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
