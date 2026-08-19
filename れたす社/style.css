@@ -501,6 +501,17 @@ body {
 .filter-bar .select-input { width: auto; }
 .filter-bar .input-field { width: auto; }
 
+.input-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-action-row .input-field {
+  min-width: 0;
+  flex: 1;
+}
+
 /* モーダル */
 .modal-overlay {
   position: fixed;
@@ -758,6 +769,17 @@ body {
 .eval-delta-minus { color: var(--danger);  font-weight: 700; }
 
 /* 規程 */
+.regulations-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.regulations-layout > * {
+  width: 100%;
+  min-width: 0;
+}
+
 .reg-section {
   margin-bottom: 20px;
 }

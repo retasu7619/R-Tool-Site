@@ -356,17 +356,58 @@ const SalaryModule = (() => {
   function showBuyLeaveModal(year, month) {
     const rate = getPurchaseLeaveRate(year, month);
     const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    const walletBalance = Math.max(0, Math.floor(SalaryModule.getWalletBalance()));
     Modal.show('購入休暇を購入', `
       <p class="text-muted" style="font-size:12px;margin-bottom:14px">${monthKey}の価格: ${rate.hourlyRate} C/h × ${rate.multiplier}倍</p>
-      <div class="form-group"><label>購入時間（分）</label><input type="text" inputmode="numeric" class="input-field" id="buy-leave-minutes" placeholder="例: 30"></div>
+      <div class="form-group">
+        <label for="buy-leave-mode">購入方法</label>
+        <select class="select-input" id="buy-leave-mode">
+          <option value="minutes">時間（分）を指定</option>
+          <option value="amount">金額を指定</option>
+        </select>
+      </div>
+      <div class="form-group" id="buy-leave-minutes-group">
+        <label for="buy-leave-minutes">購入時間（分）</label>
+        <div class="input-action-row">
+          <input type="text" inputmode="numeric" class="input-field" id="buy-leave-minutes" placeholder="例: 30">
+          <button class="btn btn-secondary btn-sm" type="button" id="buy-leave-max-btn">最大購入</button>
+        </div>
+      </div>
+      <div class="form-group hidden" id="buy-leave-amount-group">
+        <label for="buy-leave-amount">支払う金額（C）</label>
+        <input type="text" inputmode="numeric" class="input-field" id="buy-leave-amount" placeholder="例: 1,000">
+        <p class="form-hint">入力金額以内で購入できる最大の分数を計算します。</p>
+      </div>
+      <div class="forecast-row"><span>購入時間</span><strong id="buy-leave-calculated-minutes">0分</strong></div>
       <div class="forecast-row"><span>支払額</span><strong id="buy-leave-cost">0 C</strong></div>
+      <p class="form-hint">現在の手持ち通貨: ${formatCurrency(walletBalance)}</p>
     `, [
       { text: 'キャンセル', cls: 'btn-secondary', cb: Modal.hide },
       { text: '購入する', cls: 'btn-primary', cb: () => buyLeave(year, month) },
     ]);
-    document.getElementById('buy-leave-minutes').addEventListener('input', event => {
-      const minutes = parseInt(event.target.value.replace(/,/g, ''), 10) || 0;
+    const mode = document.getElementById('buy-leave-mode');
+    const minutesInput = document.getElementById('buy-leave-minutes');
+    const amountInput = document.getElementById('buy-leave-amount');
+    const minutesGroup = document.getElementById('buy-leave-minutes-group');
+    const amountGroup = document.getElementById('buy-leave-amount-group');
+    const updatePreview = () => {
+      const minutes = mode.value === 'amount'
+        ? calculateLeaveMinutes(parseNumericInput(amountInput.value), rate)
+        : parseNumericInput(minutesInput.value);
+      document.getElementById('buy-leave-calculated-minutes').textContent = `${minutes}分`;
       document.getElementById('buy-leave-cost').textContent = formatCurrency(calculateLeavePrice(minutes, rate));
+    };
+    mode.addEventListener('change', () => {
+      const amountMode = mode.value === 'amount';
+      minutesGroup.classList.toggle('hidden', amountMode);
+      amountGroup.classList.toggle('hidden', !amountMode);
+      updatePreview();
+    });
+    minutesInput.addEventListener('input', updatePreview);
+    amountInput.addEventListener('input', updatePreview);
+    document.getElementById('buy-leave-max-btn').addEventListener('click', () => {
+      minutesInput.value = calculateLeaveMinutes(walletBalance, rate);
+      updatePreview();
     });
   }
 
@@ -374,20 +415,37 @@ const SalaryModule = (() => {
     return Math.floor(rate.hourlyRate * rate.multiplier * (minutes / 60));
   }
 
+  function calculateLeaveMinutes(amount, rate) {
+    const pricePerMinute = rate.hourlyRate * rate.multiplier / 60;
+    if (!Number.isFinite(amount) || amount <= 0 || pricePerMinute <= 0) return 0;
+    let minutes = Math.max(0, Math.floor((amount + 1) / pricePerMinute));
+    while (minutes > 0 && calculateLeavePrice(minutes, rate) > amount) minutes -= 1;
+    while (calculateLeavePrice(minutes + 1, rate) <= amount) minutes += 1;
+    return minutes;
+  }
+
+  function parseNumericInput(value) {
+    return parseInt(String(value).replace(/,/g, ''), 10) || 0;
+  }
+
   function buyLeave(year, month) {
-    const minutes = parseInt(document.getElementById('buy-leave-minutes').value.replace(/,/g, ''), 10);
+    const rate = getPurchaseLeaveRate(year, month);
+    const mode = document.getElementById('buy-leave-mode').value;
+    const minutes = mode === 'amount'
+      ? calculateLeaveMinutes(parseNumericInput(document.getElementById('buy-leave-amount').value), rate)
+      : parseNumericInput(document.getElementById('buy-leave-minutes').value);
     if (!Number.isInteger(minutes) || minutes <= 0) {
       alert('購入時間を1分以上の整数で入力してください');
       return;
     }
     const monthKey = `${year}-${String(month).padStart(2, '0')}`;
     const currentRate = getPurchaseLeaveRate(year, month);
-    const rate = DB.PurchasedLeave.saveMonthlyRate(monthKey, {
+    const savedRate = DB.PurchasedLeave.saveMonthlyRate(monthKey, {
       hourlyRate: currentRate.hourlyRate,
       multiplier: currentRate.multiplier,
       monthKey,
     });
-    const amount = calculateLeavePrice(minutes, rate);
+    const amount = calculateLeavePrice(minutes, savedRate);
     if (amount > SalaryModule.getWalletBalance()) {
       alert('手持ち通貨が不足しています');
       return;
@@ -396,8 +454,8 @@ const SalaryModule = (() => {
       minutes,
       remainingMinutes: minutes,
       amount,
-      hourlyRate: rate.hourlyRate,
-      multiplier: rate.multiplier,
+      hourlyRate: savedRate.hourlyRate,
+      multiplier: savedRate.multiplier,
       monthKey,
       purchasedAt: Date.now(),
     });

@@ -11,7 +11,7 @@ const RegulationsModule = (() => {
 
     const content = document.getElementById('regulations-content');
     content.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="regulations-layout">
         <div class="card">
           <div class="reg-section">
             <div class="reg-section-title">基本設定</div>
