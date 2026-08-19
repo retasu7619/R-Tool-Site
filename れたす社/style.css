@@ -383,6 +383,11 @@ body {
   font-size: 13px;
 }
 
+.card:has(.data-table) {
+  min-width: 0;
+  overflow-x: auto;
+}
+
 .data-table th {
   background: var(--bg-card2);
   color: var(--text-sub);
@@ -828,9 +833,50 @@ body {
     grid-template-columns: 1fr;
   }
   #clock-card { grid-row: auto; }
+
+  .dashboard-grid > *,
+  .summary-grid > * {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 600px) {
-  #main-content { padding: 16px; }
+  #main-nav {
+    height: auto;
+    min-height: 52px;
+    padding: 0 12px;
+    flex-wrap: wrap;
+  }
+
+  .nav-brand {
+    flex: 1 1 auto;
+    margin-right: 12px;
+  }
+
+  .nav-status {
+    padding-left: 12px;
+    border-left: none;
+  }
+
+  .nav-links {
+    order: 3;
+    flex: 0 0 100%;
+    margin: 0 -12px;
+    border-top: 1px solid var(--border);
+  }
+
+  #main-content { padding: 16px 12px; }
+  .page-header { align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .page-header h1 { font-size: 18px; }
+  .card { padding: 14px; }
+  .alert { flex-wrap: wrap; }
+  .alert > div { flex: 1 1 calc(100% - 36px); min-width: 0; }
+  .alert .btn { width: 100%; }
+  .filter-bar { flex-wrap: wrap; }
+  .filter-bar .select-input,
+  .filter-bar .input-field,
+  .filter-bar .btn { flex: 1 1 120px; min-width: 0; }
+  .setup-panel { padding: 22px 16px; }
+  .setup-routine-fieldset { padding: 10px; }
   .nav-btn { padding: 0 10px; font-size: 12px; }
 }

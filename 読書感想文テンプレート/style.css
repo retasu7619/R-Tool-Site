@@ -185,6 +185,14 @@ body {
 }
 
 
+.container > *,
+.settings-card,
+.chapter-card,
+.manuscript-preview-card {
+    min-width: 0;
+}
+
+
 /* ========================================
    カード
 ======================================== */
@@ -232,6 +240,8 @@ body {
     display: flex;
 
     gap: 10px;
+
+    flex-wrap: wrap;
 
     margin:
         20px 0;
@@ -488,6 +498,13 @@ body {
     justify-content: space-between;
 
     gap: 20px;
+
+    min-width: 0;
+}
+
+
+.chapter-title {
+    min-width: 0;
 }
 
 
@@ -705,6 +722,14 @@ textarea:focus {
     }
 
 
+    .settings-card,
+    .chapter-card,
+    .manuscript-preview-card {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+
     .mode-selector {
         flex-direction: column;
     }
@@ -733,6 +758,17 @@ textarea:focus {
     }
 
 
+    .chapter-title h2 {
+        font-size: 20px;
+        overflow-wrap: anywhere;
+    }
+
+
+    .total-counter {
+        font-size: 14px;
+    }
+
+
     textarea {
         min-height: 250px;
     }
@@ -753,6 +789,8 @@ textarea:focus {
     border: 1px solid #30343a;
 
     border-radius: 12px;
+
+    overflow-x: auto;
 }
 
 
