@@ -6,6 +6,16 @@ const App = (() => {
 
 	function init() {
 		DB.Regulations.initialize();
+		if (!DB.Profile.isSetupComplete()) {
+			showSetupScreen();
+			return;
+		}
+		startApplication();
+	}
+
+	function startApplication() {
+		document.getElementById('setup-screen').classList.add('hidden');
+		document.getElementById('app').classList.remove('hidden');
 		bindNavigation();
 		bindDashboardActions();
 		bindModalActions();
@@ -16,6 +26,65 @@ const App = (() => {
 		startClock();
 
 		AttendanceModule.checkUnconfirmedSession();
+	}
+
+	function showSetupScreen() {
+		const screen = document.getElementById('setup-screen');
+		screen.classList.remove('hidden');
+		document.getElementById('setup-form').addEventListener('submit', completeSetup);
+	}
+
+	function completeSetup(event) {
+		event.preventDefault();
+		const name = document.getElementById('setup-name').value.trim();
+		const hourlyRate = parseInt(document.getElementById('setup-hourly-rate').value, 10);
+		const selectedDays = [...document.querySelectorAll('input[name="setup-day"]:checked')];
+		const error = document.getElementById('setup-error');
+
+		if (!name || !Number.isInteger(hourlyRate) || hourlyRate <= 0) {
+			error.textContent = '名前と、1以上の基本時給を入力してください。';
+			return;
+		}
+		if (selectedDays.length === 0) {
+			error.textContent = '勤務する曜日を1つ以上選択してください。';
+			return;
+		}
+
+		const schedules = selectedDays.map(dayInput => {
+			const day = Number(dayInput.value);
+			const startTime = document.querySelector(`[name="setup-start-${day}"]`).value;
+			const endTime = document.querySelector(`[name="setup-end-${day}"]`).value;
+			return { day, startTime, endTime };
+		});
+		if (schedules.some(schedule => !schedule.startTime || !schedule.endTime || schedule.startTime === schedule.endTime)) {
+			error.textContent = '選択した曜日の開始・終了時刻を正しく入力してください。';
+			return;
+		}
+
+		const profile = DB.Profile.get();
+		DB.Profile.set({ ...profile, name, hourlyRate, setupCompletedAt: Date.now() });
+		schedules.forEach(schedule => {
+			DB.Schedules.add({
+				type: 'regular',
+				days: [schedule.day],
+				startTime: schedule.startTime,
+				endTime: schedule.endTime,
+				durationMinutes: timeDiffMinutes(schedule.startTime, schedule.endTime),
+				plannedOvertimeMinutes: 0,
+				name: '通常勤務',
+			});
+		});
+
+		startApplication();
+		UI.toast('初期設定を保存しました', 'success');
+	}
+
+	function timeDiffMinutes(startTime, endTime) {
+		const [startHour, startMinute] = startTime.split(':').map(Number);
+		const [endHour, endMinute] = endTime.split(':').map(Number);
+		let difference = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+		if (difference < 0) difference += 24 * 60;
+		return difference;
 	}
 
 	function bindNavigation() {
@@ -129,12 +198,13 @@ const App = (() => {
 		document.getElementById('month-label').textContent = `${year}年${month}月のサマリー`;
 		document.getElementById('month-work-days').textContent = attendances.length;
 		document.getElementById('month-work-hours').textContent = `${(workMinutes / 60).toFixed(1)}h`;
-		document.getElementById('month-salary-est').textContent = `¥${data.forecast.forecastTotal.toLocaleString()}`;
+		document.getElementById('month-salary-est').textContent = `${data.forecast.forecastTotal.toLocaleString()} C`;
 		document.getElementById('month-eval-pts').textContent = `${points}pt`;
-		document.getElementById('fc-base').textContent = `¥${data.forecast.forecastBase.toLocaleString()}`;
-		document.getElementById('fc-overtime').textContent = `¥${data.forecast.forecastOvertime.toLocaleString()}`;
-		document.getElementById('fc-eval').textContent = `¥${data.forecast.forecastEvalReward.toLocaleString()}`;
-		document.getElementById('fc-total').textContent = `¥${data.forecast.forecastTotal.toLocaleString()}`;
+		document.getElementById('fc-base').textContent = `${data.forecast.forecastBase.toLocaleString()} C`;
+		document.getElementById('fc-overtime').textContent = `${data.forecast.forecastOvertime.toLocaleString()} C`;
+		document.getElementById('fc-eval').textContent = `${data.forecast.forecastEvalReward.toLocaleString()} C`;
+		document.getElementById('fc-total').textContent = `${data.forecast.forecastTotal.toLocaleString()} C`;
+		document.getElementById('wallet-balance').textContent = `${SalaryModule.getWalletBalance()} C`;
 	}
 
 	function renderRecentAttendance() {

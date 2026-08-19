@@ -124,6 +124,47 @@ body {
 .page.active { display: block; }
 .hidden { display: none !important; }
 
+/* 初回設定 */
+.setup-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: radial-gradient(circle at top right, #1d2b4a 0, var(--bg) 42%);
+}
+
+.setup-panel {
+  width: 100%;
+  max-width: 640px;
+  padding: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+
+.setup-kicker {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .12em;
+  margin-bottom: 10px;
+}
+
+.setup-panel h1 { font-size: 24px; margin-bottom: 6px; }
+.setup-description { color: var(--text-sub); margin-bottom: 24px; }
+.setup-routine-fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 14px; }
+.setup-routine-fieldset legend { color: var(--text-sub); font-size: 12px; font-weight: 600; padding: 0 6px; }
+.setup-routine-list { margin-top: 12px; }
+.setup-routine-header, .setup-routine-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center; }
+.setup-routine-header { color: var(--text-dim); font-size: 11px; padding: 0 8px 5px; }
+.setup-routine-row { padding: 7px 8px; border-top: 1px solid var(--border); }
+.setup-routine-row span { font-size: 13px; }
+.setup-routine-row input[type="time"] { width: 100%; }
+.setup-error { min-height: 22px; color: var(--danger); font-size: 12px; }
+.setup-submit { width: 100%; margin-top: 6px; }
+
 /* ページヘッダー */
 .page-header {
   display: flex;

@@ -11,6 +11,10 @@
  *   vw_eval_monthly     : 月別評価ポイント確定値
  *   vw_salary_monthly   : 月別給与確定
  *   vw_bonus_events     : 成果ボーナスイベント
+ *   vw_wallet_expenses  : 手持ち通貨の支出履歴
+ *   vw_purchased_leave  : 購入休暇の購入履歴
+ *   vw_paid_leave       : 有給残高
+ *   vw_leave_applications : 休暇申請履歴
  *   vw_current_session  : 現在の勤務セッション
  */
 
@@ -44,7 +48,11 @@ const DB = (() => {
         createdAt: Date.now(),
       };
     },
-    set(data) { set('profile', data); }
+    set(data) { set('profile', data); },
+    isSetupComplete() {
+      const profile = get('profile');
+      return Boolean(profile?.setupCompletedAt);
+    }
   };
 
   // ---- 規程 ----
@@ -309,6 +317,79 @@ const DB = (() => {
     }
   };
 
+  // ---- 手持ち通貨の支出 ----
+  const Wallet = {
+    getExpenses() { return get('wallet_expenses') || []; },
+    saveExpenses(list) { set('wallet_expenses', list); },
+
+    addExpense(expense) {
+      const list = this.getExpenses();
+      const record = {
+        ...expense,
+        id: `expense_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        createdAt: Date.now(),
+      };
+      list.push(record);
+      this.saveExpenses(list);
+      return record;
+    },
+
+    removeExpense(id) {
+      this.saveExpenses(this.getExpenses().filter(expense => expense.id !== id));
+    },
+  };
+
+  // ---- 購入休暇 ----
+  const PurchasedLeave = {
+    getPurchases() { return get('purchased_leave') || []; },
+    savePurchases(list) { set('purchased_leave', list); },
+    getMonthlyRate(monthKey) {
+      const rates = get('purchased_leave_monthly_rates') || {};
+      return rates[monthKey] || null;
+    },
+    saveMonthlyRate(monthKey, rate) {
+      const rates = get('purchased_leave_monthly_rates') || {};
+      if (!rates[monthKey]) {
+        rates[monthKey] = rate;
+        set('purchased_leave_monthly_rates', rates);
+      }
+      return rates[monthKey];
+    },
+    addPurchase(data) {
+      const list = this.getPurchases();
+      const purchase = {
+        ...data,
+        id: `leave_buy_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        createdAt: Date.now(),
+      };
+      list.push(purchase);
+      this.savePurchases(list);
+      return purchase;
+    },
+  };
+
+  // ---- 有給と休暇申請 ----
+  const PaidLeave = {
+    getBalance() { return get('paid_leave') || { minutes: 0, updatedAt: Date.now() }; },
+    setBalance(minutes) { set('paid_leave', { minutes: Math.max(0, Math.floor(minutes)), updatedAt: Date.now() }); },
+  };
+
+  const LeaveApplications = {
+    getAll() { return get('leave_applications') || []; },
+    save(list) { set('leave_applications', list); },
+    add(data) {
+      const list = this.getAll();
+      const application = {
+        ...data,
+        id: `leave_app_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        createdAt: Date.now(),
+      };
+      list.push(application);
+      this.save(list);
+      return application;
+    },
+  };
+
   // ---- 現在セッション ----
   const CurrentSession = {
     get() { return get('current_session'); },
@@ -321,7 +402,8 @@ const DB = (() => {
     export() {
       const keys = [
         'profile', 'reg_current', 'schedules', 'attendance',
-        'work_blocks', 'eval_logs', 'salary_monthly', 'bonus_events'
+        'work_blocks', 'eval_logs', 'salary_monthly', 'bonus_events', 'wallet_expenses',
+        'purchased_leave', 'purchased_leave_monthly_rates', 'paid_leave', 'leave_applications'
       ];
       // 規程全バージョン
       const regVer = Regulations.getCurrentVersion();
@@ -346,6 +428,6 @@ const DB = (() => {
   return {
     Profile, Regulations, Schedules, Attendance,
     WorkBlocks, EvalLogs, SalaryMonthly, BonusEvents,
-    CurrentSession, Backup
+    Wallet, PurchasedLeave, PaidLeave, LeaveApplications, CurrentSession, Backup
   };
 })();

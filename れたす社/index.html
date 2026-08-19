@@ -7,7 +7,40 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
+  <section id="setup-screen" class="setup-screen hidden">
+    <div class="setup-panel">
+      <div class="setup-kicker">VIRTUALWORK / INITIAL SETUP</div>
+      <h1>はじめに設定しましょう</h1>
+      <p class="setup-description">名前、基本時給、勤務ルーティーンを設定すると利用を開始できます。</p>
+      <form id="setup-form">
+        <div class="form-group">
+          <label for="setup-name">名前</label>
+          <input id="setup-name" class="input-field" type="text" required autocomplete="name" placeholder="例: 山田 太郎">
+        </div>
+        <div class="form-group">
+          <label for="setup-hourly-rate">基本時給（C）</label>
+          <input id="setup-hourly-rate" class="input-field" type="number" min="1" step="1" required value="100">
+        </div>
+        <fieldset class="setup-routine-fieldset">
+          <legend>勤務ルーティーン</legend>
+          <p class="form-hint">勤務する曜日にチェックを入れ、開始・終了時刻を設定してください。</p>
+          <div class="setup-routine-list">
+            <div class="setup-routine-header"><span>曜日</span><span>開始</span><span>終了</span></div>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="1" checked> 月</span><input type="time" name="setup-start-1" value="09:00"><input type="time" name="setup-end-1" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="2" checked> 火</span><input type="time" name="setup-start-2" value="09:00"><input type="time" name="setup-end-2" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="3" checked> 水</span><input type="time" name="setup-start-3" value="09:00"><input type="time" name="setup-end-3" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="4" checked> 木</span><input type="time" name="setup-start-4" value="09:00"><input type="time" name="setup-end-4" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="5" checked> 金</span><input type="time" name="setup-start-5" value="09:00"><input type="time" name="setup-end-5" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="6"> 土</span><input type="time" name="setup-start-6" value="09:00"><input type="time" name="setup-end-6" value="18:00"></label>
+            <label class="setup-routine-row"><span><input type="checkbox" name="setup-day" value="0"> 日</span><input type="time" name="setup-start-0" value="09:00"><input type="time" name="setup-end-0" value="18:00"></label>
+          </div>
+        </fieldset>
+        <p id="setup-error" class="setup-error" role="alert"></p>
+        <button class="btn btn-primary btn-lg setup-submit" type="submit">設定して開始</button>
+      </form>
+    </div>
+  </section>
+  <div id="app" class="hidden">
     <!-- ナビゲーション -->
     <nav id="main-nav">
       <div class="nav-brand">
@@ -126,6 +159,13 @@
                 <span id="fc-total">¥0</span>
               </div>
             </div>
+          </div>
+
+          <!-- 手持ち残高 -->
+          <div class="card" id="wallet-balance-card">
+            <div class="card-label">手持ち残高</div>
+            <div class="summary-num" id="wallet-balance">0 C</div>
+            <div class="summary-label">確定した勤務給与 − 支出</div>
           </div>
         </div>
 

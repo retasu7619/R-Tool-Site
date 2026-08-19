@@ -134,6 +134,7 @@ const SalaryModule = (() => {
     const monthLabel = `${year}年${month}月`;
     const attendances = DB.Attendance.getByMonth(year, month).filter(a => a.status === 'confirmed');
     const bonusEvents = DB.BonusEvents.getByMonth(year, month);
+    const expenses = DB.Wallet.getExpenses().filter(expense => expense.date.startsWith(`${year}-${String(month).padStart(2, '0')}`));
 
     document.getElementById('salary-content').innerHTML = `
       <div style="display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start">
@@ -147,16 +148,16 @@ const SalaryModule = (() => {
           </div>
           <div class="payslip-section">
             <div class="payslip-section-title">支給項目</div>
-            <div class="payslip-row"><span>基本給与</span><span class="mono">¥${data.confirmedBaseWage.toLocaleString()}</span></div>
-            <div class="payslip-row"><span>時間外報酬（${formatHoursMin(data.totalOvertimeMinutes)}）</span><span class="mono">¥${data.confirmedOvertimeWage.toLocaleString()}</span></div>
-            <div class="payslip-row"><span>評価報酬（${data.evalPoints}pt → ${Math.round(data.evalPoints)}%）</span><span class="mono">¥${data.evalReward.toLocaleString()}</span></div>
+            <div class="payslip-row"><span>基本給与</span><span class="mono">${formatCurrency(data.confirmedBaseWage)}</span></div>
+            <div class="payslip-row"><span>時間外報酬（${formatHoursMin(data.totalOvertimeMinutes)}）</span><span class="mono">${formatCurrency(data.confirmedOvertimeWage)}</span></div>
+            <div class="payslip-row"><span>評価報酬（${data.evalPoints}pt → ${Math.round(data.evalPoints)}%）</span><span class="mono">${formatCurrency(data.evalReward)}</span></div>
             ${bonusEvents.map(b => `
-              <div class="payslip-row"><span>${b.name}</span><span class="mono text-success">¥${(b.amount||0).toLocaleString()}</span></div>
+              <div class="payslip-row"><span>${b.name}</span><span class="mono text-success">+${formatCurrency(b.amount || 0)}</span></div>
             `).join('')}
           </div>
           <div class="payslip-total">
             <span>総支給額</span>
-            <span>¥${data.totalConfirmed.toLocaleString()}</span>
+            <span>${formatCurrency(data.totalConfirmed)}</span>
           </div>
         </div>
         <div>
@@ -164,10 +165,10 @@ const SalaryModule = (() => {
             <div class="card-label">給与予測（月全体）</div>
             <div class="forecast-row"><span>予定勤務時間</span><span>${formatHoursMin(data.forecast.forecastWorkMinutes)}</span></div>
             <div class="forecast-row"><span>予定時間外</span><span>${formatHoursMin(data.forecast.forecastOvertimeMinutes)}</span></div>
-            <div class="forecast-row"><span>基本給与予想</span><span class="mono">¥${data.forecast.forecastBase.toLocaleString()}</span></div>
-            <div class="forecast-row"><span>時間外報酬予想</span><span class="mono">¥${data.forecast.forecastOvertime.toLocaleString()}</span></div>
-            <div class="forecast-row"><span>評価報酬予想</span><span class="mono">¥${data.forecast.forecastEvalReward.toLocaleString()}</span></div>
-            <div class="forecast-row forecast-total"><span>予想総支給</span><span class="mono">¥${data.forecast.forecastTotal.toLocaleString()}</span></div>
+            <div class="forecast-row"><span>基本給与予想</span><span class="mono">${formatCurrency(data.forecast.forecastBase)}</span></div>
+            <div class="forecast-row"><span>時間外報酬予想</span><span class="mono">${formatCurrency(data.forecast.forecastOvertime)}</span></div>
+            <div class="forecast-row"><span>評価報酬予想</span><span class="mono">${formatCurrency(data.forecast.forecastEvalReward)}</span></div>
+            <div class="forecast-row forecast-total"><span>予想総支給</span><span class="mono">${formatCurrency(data.forecast.forecastTotal)}</span></div>
           </div>
           <div class="card mt-1">
             <div class="card-label">成果ボーナス履歴</div>
@@ -176,7 +177,7 @@ const SalaryModule = (() => {
               : bonusEvents.map(b => `
                 <div class="payslip-row">
                   <span>${b.name}<br><span class="text-muted" style="font-size:11px">${b.date} / 偏差値${b.deviation || '-'}</span></span>
-                  <span class="mono text-success">+¥${(b.amount||0).toLocaleString()}</span>
+                  <span class="mono text-success">+${formatCurrency(b.amount || 0)}</span>
                 </div>
               `).join('')
             }
@@ -184,11 +185,314 @@ const SalaryModule = (() => {
               <button class="btn btn-secondary btn-sm" id="add-bonus-btn">＋ ボーナスを追加</button>
             </div>
           </div>
+          <div class="card mt-1">
+            <div class="card-label">手持ち通貨</div>
+            <div class="payslip-total" style="margin-top:0">
+              <span>現在の残高</span>
+              <span>${formatCurrency(getWalletBalance())}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+              <button class="btn btn-danger btn-sm" id="add-expense-btn">− 支出を登録</button>
+            </div>
+          </div>
+          <div class="card mt-1">
+            <div class="card-label">${monthLabel}の収支履歴</div>
+            ${renderWalletHistory(year, month, data, expenses)}
+          </div>
+          ${renderPurchasedLeaveSection(year, month)}
         </div>
       </div>
     `;
 
     document.getElementById('add-bonus-btn')?.addEventListener('click', () => showAddBonus(year, month));
+    document.getElementById('add-expense-btn')?.addEventListener('click', () => showAddExpense(year, month));
+    document.querySelectorAll('[data-remove-expense]').forEach(button => {
+      button.addEventListener('click', () => removeExpense(button.dataset.removeExpense, year, month));
+    });
+    document.getElementById('buy-leave-btn')?.addEventListener('click', () => showBuyLeaveModal(year, month));
+    document.getElementById('apply-leave-btn')?.addEventListener('click', showLeaveApplicationModal);
+    document.getElementById('set-paid-leave-btn')?.addEventListener('click', showPaidLeaveModal);
+  }
+
+  function getWalletBalance() {
+    const earned = getEarnedTotal();
+    const spent = DB.Wallet.getExpenses().reduce((total, expense) => total + (expense.amount || 0), 0);
+    return earned - spent;
+  }
+
+  function getEarnedTotal() {
+    const confirmed = DB.Attendance.getAll().filter(attendance => attendance.status === 'confirmed');
+    const earnedFromAttendance = confirmed.reduce((total, attendance) => {
+      const reg = DB.Regulations.getRegAt(attendance.clockInTime || Date.now());
+      const profile = DB.Profile.get();
+      return total + calcBaseWage(attendance.workMinutes || 0, profile.hourlyRate || 100)
+        + calcBaseWage(attendance.overtimeMinutes || 0, (profile.hourlyRate || 100) * reg.overtimeRate);
+    }, 0);
+    const confirmedMonths = new Set(confirmed.map(attendance => attendance.date.slice(0, 7)));
+    const earnedBonuses = DB.BonusEvents.getAll().reduce((total, bonus) => total + (bonus.amount || 0), 0);
+    const earnedEvaluation = [...confirmedMonths].reduce((total, monthKey) => {
+      const [year, month] = monthKey.split('-').map(Number);
+      return total + calcMonthSalary(year, month).evalReward;
+    }, 0);
+    return earnedFromAttendance + earnedBonuses + earnedEvaluation;
+  }
+
+  function renderWalletHistory(year, month, salary, expenses) {
+    const incomeRows = [];
+    if (salary.confirmedBaseWage) incomeRows.push({ date: `${year}-${String(month).padStart(2, '0')}`, label: '基本給与', amount: salary.confirmedBaseWage });
+    if (salary.confirmedOvertimeWage) incomeRows.push({ date: `${year}-${String(month).padStart(2, '0')}`, label: '時間外報酬', amount: salary.confirmedOvertimeWage });
+    if (salary.evalReward && DB.Attendance.getByMonth(year, month).some(attendance => attendance.status === 'confirmed')) incomeRows.push({ date: `${year}-${String(month).padStart(2, '0')}`, label: '評価報酬', amount: salary.evalReward });
+    salary.bonusTotal && DB.BonusEvents.getByMonth(year, month).forEach(bonus => incomeRows.push({ date: bonus.date, label: bonus.name, amount: bonus.amount || 0 }));
+    const rows = [
+      ...incomeRows.map(row => `<div class="payslip-row"><span>${row.date}<br><span class="text-muted">${row.label}</span></span><span class="mono text-success">+${formatCurrency(row.amount)}</span></div>`),
+      ...expenses.map(expense => `<div class="payslip-row"><span>${expense.date}<br><span class="text-muted">${escapeHtml(expense.memo)} / ${escapeHtml(expense.purpose)}</span></span><span class="mono text-danger">−${formatCurrency(expense.amount)}</span>${expense.category === 'purchased_leave' ? '' : `<button class="btn btn-sm btn-ghost" data-remove-expense="${expense.id}">取消</button>`}</div>`),
+    ];
+    if (rows.length === 0) return '<p class="text-muted">この月の履歴はありません</p>';
+    return rows.join('');
+  }
+
+  function showAddExpense(year, month) {
+    const today = new Date();
+    const defaultDate = `${year}-${String(month).padStart(2, '0')}-${String(Math.min(today.getDate(), new Date(year, month, 0).getDate())).padStart(2, '0')}`;
+    Modal.show('支出を登録', `
+      <div class="form-group"><label>用途</label><input class="input-field" id="expense-purpose" placeholder="例: ゲーム"></div>
+      <div class="form-group"><label>金額（C）</label><input type="text" inputmode="numeric" class="input-field" id="expense-amount" placeholder="例: 3,000"></div>
+      <div class="form-group"><label>日付</label><input type="date" class="input-field" id="expense-date" value="${defaultDate}"></div>
+      <div class="form-group"><label>メモ</label><textarea class="textarea-field" id="expense-memo" rows="2" placeholder="例: 誕生日に購入"></textarea></div>
+    `, [
+      { text: 'キャンセル', cls: 'btn-secondary', cb: Modal.hide },
+      { text: '支出を登録', cls: 'btn-danger', cb: () => addExpense(year, month) },
+    ]);
+  }
+
+  function addExpense(year, month) {
+    const purpose = document.getElementById('expense-purpose').value.trim();
+    const amount = parseInt(document.getElementById('expense-amount').value.replace(/,/g, ''), 10);
+    const date = document.getElementById('expense-date').value;
+    const memo = document.getElementById('expense-memo').value.trim();
+    if (!purpose || !Number.isInteger(amount) || amount <= 0 || !date) {
+      alert('用途、正しい金額、日付を入力してください');
+      return;
+    }
+    if (amount > getWalletBalance()) {
+      alert('手持ち残高を超える支出は登録できません');
+      return;
+    }
+    DB.Wallet.addExpense({ purpose, amount, date, memo });
+    Modal.hide();
+    renderSalaryContent(year, month);
+    App.refreshDashboard();
+    UI.toast(`${formatCurrency(amount)} を支出しました`, 'success');
+  }
+
+  function removeExpense(id, year, month) {
+    if (!confirm('この支出履歴を取り消しますか？')) return;
+    DB.Wallet.removeExpense(id);
+    renderSalaryContent(year, month);
+    App.refreshDashboard();
+    UI.toast('支出を取り消しました', 'success');
+  }
+
+  const PURCHASE_LEAVE_MULTIPLIER = 1.5;
+
+  function getPurchasedLeaveBalance() {
+    return DB.PurchasedLeave.getPurchases().reduce((total, purchase) => total + (purchase.remainingMinutes || 0), 0);
+  }
+
+  function getPurchaseLeaveRate(year, month) {
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    return DB.PurchasedLeave.getMonthlyRate(monthKey) || {
+      hourlyRate: DB.Profile.get().hourlyRate || 100,
+      multiplier: PURCHASE_LEAVE_MULTIPLIER,
+      monthKey,
+      isPreview: true,
+    };
+  }
+
+  function renderPurchasedLeaveSection(year, month) {
+    const paidBalance = DB.PaidLeave.getBalance().minutes || 0;
+    const purchasedBalance = getPurchasedLeaveBalance();
+    const rate = getPurchaseLeaveRate(year, month);
+    const purchases = DB.PurchasedLeave.getPurchases().sort((a, b) => b.createdAt - a.createdAt);
+    const applications = DB.LeaveApplications.getAll().sort((a, b) => b.createdAt - a.createdAt);
+
+    return `
+      <div class="card mt-1">
+        <div class="card-label">購入休暇</div>
+        <div class="summary-grid">
+          <div class="summary-item"><div class="summary-num">${purchasedBalance}分</div><div class="summary-label">購入休暇残高</div></div>
+          <div class="summary-item"><div class="summary-num">${paidBalance}分</div><div class="summary-label">有給残高</div></div>
+        </div>
+        <div class="forecast-row"><span>${year}年${month}月の購入価格</span><span class="mono">${rate.hourlyRate} C/h × ${rate.multiplier}倍</span></div>
+        <p class="form-hint" style="margin-top:8px">購入価格 = 基本時給 × 購入休暇倍率 ×（購入時間 ÷ 60）。月内の価格は初回購入時に固定されます。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-primary btn-sm" id="buy-leave-btn">＋ 購入休暇を購入</button>
+          <button class="btn btn-secondary btn-sm" id="apply-leave-btn">休暇を申請</button>
+          <button class="btn btn-ghost btn-sm" id="set-paid-leave-btn">有給残高を設定</button>
+        </div>
+      </div>
+      <div class="card mt-1">
+        <div class="card-label">購入履歴</div>
+        ${purchases.length === 0 ? '<p class="text-muted">購入履歴はありません</p>' : purchases.map(purchase => `
+          <div class="payslip-row">
+            <span>${new Date(purchase.purchasedAt || purchase.createdAt).toLocaleString('ja-JP')}<br><span class="text-muted">${purchase.minutes}分購入 / 残り${purchase.remainingMinutes}分</span></span>
+            <span class="mono text-danger">−${formatCurrency(purchase.amount)}</span>
+          </div>
+          <div class="text-muted" style="font-size:11px;margin:-4px 0 8px">時給${purchase.hourlyRate} C / 倍率${purchase.multiplier}倍</div>
+        `).join('')}
+      </div>
+      <div class="card mt-1">
+        <div class="card-label">休暇申請履歴</div>
+        ${applications.length === 0 ? '<p class="text-muted">申請履歴はありません</p>' : applications.map(application => `
+          <div class="payslip-row">
+            <span>${application.date} / ${application.requestedMinutes}分<br><span class="text-muted">${application.priority === 'paid_first' ? '有給を優先' : '購入休暇を優先'} / 有給${application.paidLeaveMinutes}分 / 購入休暇${application.purchasedLeaveMinutes}分</span></span>
+            <span class="badge badge-success">申請済み</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function showBuyLeaveModal(year, month) {
+    const rate = getPurchaseLeaveRate(year, month);
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    Modal.show('購入休暇を購入', `
+      <p class="text-muted" style="font-size:12px;margin-bottom:14px">${monthKey}の価格: ${rate.hourlyRate} C/h × ${rate.multiplier}倍</p>
+      <div class="form-group"><label>購入時間（分）</label><input type="text" inputmode="numeric" class="input-field" id="buy-leave-minutes" placeholder="例: 30"></div>
+      <div class="forecast-row"><span>支払額</span><strong id="buy-leave-cost">0 C</strong></div>
+    `, [
+      { text: 'キャンセル', cls: 'btn-secondary', cb: Modal.hide },
+      { text: '購入する', cls: 'btn-primary', cb: () => buyLeave(year, month) },
+    ]);
+    document.getElementById('buy-leave-minutes').addEventListener('input', event => {
+      const minutes = parseInt(event.target.value.replace(/,/g, ''), 10) || 0;
+      document.getElementById('buy-leave-cost').textContent = formatCurrency(calculateLeavePrice(minutes, rate));
+    });
+  }
+
+  function calculateLeavePrice(minutes, rate) {
+    return Math.floor(rate.hourlyRate * rate.multiplier * (minutes / 60));
+  }
+
+  function buyLeave(year, month) {
+    const minutes = parseInt(document.getElementById('buy-leave-minutes').value.replace(/,/g, ''), 10);
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+      alert('購入時間を1分以上の整数で入力してください');
+      return;
+    }
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+    const currentRate = getPurchaseLeaveRate(year, month);
+    const rate = DB.PurchasedLeave.saveMonthlyRate(monthKey, {
+      hourlyRate: currentRate.hourlyRate,
+      multiplier: currentRate.multiplier,
+      monthKey,
+    });
+    const amount = calculateLeavePrice(minutes, rate);
+    if (amount > SalaryModule.getWalletBalance()) {
+      alert('手持ち通貨が不足しています');
+      return;
+    }
+    const purchase = DB.PurchasedLeave.addPurchase({
+      minutes,
+      remainingMinutes: minutes,
+      amount,
+      hourlyRate: rate.hourlyRate,
+      multiplier: rate.multiplier,
+      monthKey,
+      purchasedAt: Date.now(),
+    });
+    DB.Wallet.addExpense({
+      purpose: '購入休暇',
+      amount,
+      date: new Date().toISOString().slice(0, 10),
+      memo: `${minutes}分の購入休暇`,
+      category: 'purchased_leave',
+      leavePurchaseId: purchase.id,
+    });
+    Modal.hide();
+    renderSalaryContent(year, month);
+    App.refreshDashboard();
+    UI.toast(`${minutes}分の購入休暇を購入しました`, 'success');
+  }
+
+  function showPaidLeaveModal() {
+    const current = DB.PaidLeave.getBalance().minutes || 0;
+    Modal.show('有給残高を設定', `
+      <p class="text-muted" style="font-size:12px;margin-bottom:14px">有給は購入休暇とは別の残高です。分単位で設定します。</p>
+      <div class="form-group"><label>有給残高（分）</label><input type="number" min="0" step="1" class="input-field" id="paid-leave-balance" value="${current}"></div>
+    `, [
+      { text: 'キャンセル', cls: 'btn-secondary', cb: Modal.hide },
+      { text: '保存', cls: 'btn-primary', cb: () => savePaidLeave() },
+    ]);
+  }
+
+  function savePaidLeave() {
+    const minutes = parseInt(document.getElementById('paid-leave-balance').value, 10);
+    if (!Number.isInteger(minutes) || minutes < 0) { alert('0以上の整数を入力してください'); return; }
+    DB.PaidLeave.setBalance(minutes);
+    Modal.hide();
+    render();
+    UI.toast('有給残高を更新しました', 'success');
+  }
+
+  function showLeaveApplicationModal() {
+    const purchasedBalance = getPurchasedLeaveBalance();
+    const paidBalance = DB.PaidLeave.getBalance().minutes || 0;
+    Modal.show('休暇を申請', `
+      <div class="form-group"><label>休暇時間（分）</label><input type="number" min="1" step="1" class="input-field" id="leave-request-minutes" placeholder="例: 90"></div>
+      <div class="form-group"><label>使用する休暇の優先順位</label><select class="select-input" id="leave-priority"><option value="paid_first">有給を優先</option><option value="purchased_first">購入休暇を優先</option></select></div>
+      <div class="form-hint">有給残高: ${paidBalance}分 / 購入休暇残高: ${purchasedBalance}分</div>
+    `, [
+      { text: 'キャンセル', cls: 'btn-secondary', cb: Modal.hide },
+      { text: '申請を確定', cls: 'btn-primary', cb: saveLeaveApplication },
+    ]);
+  }
+
+  function saveLeaveApplication() {
+    const requestedMinutes = parseInt(document.getElementById('leave-request-minutes').value, 10);
+    const priority = document.getElementById('leave-priority').value;
+    const paidBalance = DB.PaidLeave.getBalance().minutes || 0;
+    const purchasedBalance = getPurchasedLeaveBalance();
+    if (!Number.isInteger(requestedMinutes) || requestedMinutes <= 0) { alert('休暇時間を1分以上で入力してください'); return; }
+    if (requestedMinutes > paidBalance + purchasedBalance) { alert('有給と購入休暇を合わせても残高が不足しています'); return; }
+
+    const paidLeaveMinutes = priority === 'paid_first'
+      ? Math.min(requestedMinutes, paidBalance)
+      : Math.min(Math.max(0, requestedMinutes - purchasedBalance), paidBalance);
+    const purchasedLeaveMinutes = requestedMinutes - paidLeaveMinutes;
+    consumePurchasedLeave(purchasedLeaveMinutes);
+    DB.PaidLeave.setBalance(paidBalance - paidLeaveMinutes);
+    DB.LeaveApplications.add({
+      date: new Date().toISOString().slice(0, 10),
+      requestedMinutes,
+      priority,
+      paidLeaveMinutes,
+      purchasedLeaveMinutes,
+    });
+    Modal.hide();
+    render();
+    UI.toast(`${requestedMinutes}分の休暇を申請しました`, 'success');
+  }
+
+  function consumePurchasedLeave(minutes) {
+    if (minutes <= 0) return;
+    const purchases = DB.PurchasedLeave.getPurchases().sort((a, b) => a.createdAt - b.createdAt);
+    let remaining = minutes;
+    purchases.forEach(purchase => {
+      if (remaining <= 0) return;
+      const used = Math.min(purchase.remainingMinutes || 0, remaining);
+      purchase.remainingMinutes -= used;
+      remaining -= used;
+    });
+    DB.PurchasedLeave.savePurchases(purchases);
+  }
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+  }
+
+  function formatCurrency(amount) {
+    return `${amount.toLocaleString()} C`;
   }
 
   function showAddBonus(year, month) {
@@ -278,5 +582,5 @@ const SalaryModule = (() => {
     return `${h}:${String(m).padStart(2,'0')}`;
   }
 
-  return { render, calcMonthSalary, calcDeviationBonus, formatHoursMin, populateYearMonth };
+  return { render, calcMonthSalary, calcDeviationBonus, formatHoursMin, populateYearMonth, getWalletBalance };
 })();
