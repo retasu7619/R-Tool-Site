@@ -12,7 +12,9 @@ body {
 body {
   background: #000000;
   color: #ffffff;
+
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
   overflow: hidden;
 }
 
@@ -21,20 +23,31 @@ input {
   font: inherit;
 }
 
+/* =========================
+   メイン
+   ========================= */
+
 .dice-container {
   width: 100%;
   height: 100%;
+
   display: flex;
   flex-direction: column;
+
   justify-content: center;
   align-items: center;
 }
 
-/* 出目 */
+/* =========================
+   出目
+   ========================= */
 
 .result {
   padding: 0;
+
   border: none;
+  outline: none;
+
   background: transparent;
   color: #ffffff;
 
@@ -42,32 +55,30 @@ input {
   font-weight: 700;
   line-height: 0.9;
 
-  cursor: pointer;
+  cursor: default;
   user-select: none;
 
-  transition:
-    transform 0.1s ease,
-    opacity 0.1s ease;
+  /*
+     * ホバーエフェクトなし。
+     * 隠し機能としてクリック可能。
+     */
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.result:hover {
-  transform: scale(1.02);
-}
-
-.result:active {
-  transform: scale(0.97);
-}
-
-/* クリティカル・ファンブル表示 */
+/* =========================
+   判定表示
+   ========================= */
 
 .judgement {
   min-height: 2.5rem;
+
   margin-top: 28px;
 
   font-size: clamp(24px, 5vw, 48px);
   font-weight: 700;
-  letter-spacing: 0.08em;
 
+  letter-spacing: 0.08em;
   text-align: center;
 }
 
@@ -79,42 +90,38 @@ input {
   color: #ff3366;
 }
 
-/* ROLL */
+/* =========================
+   ロール中
+   ========================= */
 
-.roll-button {
-  position: fixed;
-  bottom: 40px;
-
-  padding: 12px 28px;
-
-  border: 1px solid #ffffff;
-  border-radius: 999px;
-
-  background: transparent;
-  color: #ffffff;
-
-  font-size: 14px;
-  letter-spacing: 0.15em;
-
-  cursor: pointer;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+.result.rolling {
+  animation: roll 0.08s linear infinite;
 }
 
-.roll-button:hover {
-  background: #ffffff;
-  color: #000000;
+@keyframes roll {
+  0% {
+    transform: translateY(-4px);
+  }
+
+  50% {
+    transform: translateY(4px);
+  }
+
+  100% {
+    transform: translateY(-4px);
+  }
 }
 
-/* 設定オーバーレイ */
+/* =========================
+   設定オーバーレイ
+   ========================= */
 
 .overlay {
   position: fixed;
   inset: 0;
 
   display: flex;
+
   justify-content: center;
   align-items: center;
 
@@ -131,15 +138,19 @@ input {
 .overlay.hidden {
   opacity: 0;
   visibility: hidden;
+
   pointer-events: none;
 }
 
-/* 設定パネル */
+/* =========================
+   設定パネル
+   ========================= */
 
 .settings {
   position: relative;
 
   width: min(90vw, 420px);
+
   padding: 36px;
 
   border: 1px solid #333333;
@@ -153,15 +164,25 @@ input {
 
   font-size: 24px;
   font-weight: 500;
+
   letter-spacing: 0.08em;
 }
 
+/* =========================
+   閉じるボタン
+   ========================= */
+
 .close-button {
   position: absolute;
+
   top: 16px;
   right: 18px;
 
+  padding: 0;
+
   border: none;
+  outline: none;
+
   background: transparent;
   color: #ffffff;
 
@@ -171,17 +192,27 @@ input {
   cursor: pointer;
 }
 
+/* =========================
+   設定項目
+   ========================= */
+
 .setting-item {
   margin-bottom: 24px;
 }
 
 .setting-item label {
   display: block;
+
   margin-bottom: 10px;
 
   color: #cccccc;
+
   font-size: 14px;
 }
+
+/* =========================
+   入力欄
+   ========================= */
 
 .setting-item input {
   width: 100%;
@@ -202,9 +233,15 @@ input {
   border-color: #ffffff;
 }
 
+/* =========================
+   範囲入力
+   ========================= */
+
 .range-inputs {
   display: flex;
+
   align-items: center;
+
   gap: 10px;
 }
 
@@ -216,13 +253,23 @@ input {
   color: #888888;
 }
 
+/* =========================
+   エラー
+   ========================= */
+
 .settings-error {
   min-height: 20px;
+
   margin: 0 0 16px;
 
   color: #ff3366;
+
   font-size: 13px;
 }
+
+/* =========================
+   保存ボタン
+   ========================= */
 
 .save-button {
   width: 100%;
@@ -241,35 +288,13 @@ input {
   opacity: 0.85;
 }
 
-/* ロール中 */
-
-.result.rolling {
-  animation: roll 0.08s linear infinite;
-}
-
-@keyframes roll {
-  0% {
-    transform: translateY(-4px);
-  }
-
-  50% {
-    transform: translateY(4px);
-  }
-
-  100% {
-    transform: translateY(-4px);
-  }
-}
-
-/* スマホ */
+/* =========================
+   スマホ
+   ========================= */
 
 @media (max-width: 500px) {
   .settings {
     padding: 28px 22px;
-  }
-
-  .roll-button {
-    bottom: 24px;
   }
 
   .judgement {

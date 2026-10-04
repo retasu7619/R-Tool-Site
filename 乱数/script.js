@@ -1,10 +1,8 @@
 "use strict";
 
-/*
- * =========================
- *  設定
- * =========================
- */
+/* =========================
+   デフォルト設定
+   ========================= */
 
 const DEFAULT_SETTINGS = {
   diceSides: 100,
@@ -16,11 +14,9 @@ const DEFAULT_SETTINGS = {
   fumbleMax: 100,
 };
 
-/*
- * =========================
- *  IndexedDB
- * =========================
- */
+/* =========================
+   IndexedDB
+   ========================= */
 
 const DB_NAME = "DiceRollerDB";
 const DB_VERSION = 1;
@@ -43,6 +39,7 @@ function openDatabase() {
 
     request.onsuccess = (event) => {
       db = event.target.result;
+
       resolve(db);
     };
 
@@ -57,6 +54,7 @@ function loadSettings() {
     const transaction = db.transaction(STORE_NAME, "readonly");
 
     const store = transaction.objectStore(STORE_NAME);
+
     const request = store.get(SETTINGS_KEY);
 
     request.onsuccess = () => {
@@ -96,16 +94,13 @@ function saveSettings(settings) {
   });
 }
 
-/*
- * =========================
- *  DOM
- * =========================
- */
+/* =========================
+   DOM
+   ========================= */
 
 const resultElement = document.getElementById("result");
-const judgementElement = document.getElementById("judgement");
 
-const rollButton = document.getElementById("rollButton");
+const judgementElement = document.getElementById("judgement");
 
 const settingsOverlay = document.getElementById("settingsOverlay");
 
@@ -125,21 +120,17 @@ const fumbleMinInput = document.getElementById("fumbleMin");
 
 const fumbleMaxInput = document.getElementById("fumbleMax");
 
-/*
- * =========================
- *  現在の設定
- * =========================
- */
+/* =========================
+   現在の設定
+   ========================= */
 
 let settings = {
   ...DEFAULT_SETTINGS,
 };
 
-/*
- * =========================
- *  ダイスを振る
- * =========================
- */
+/* =========================
+   ダイス
+   ========================= */
 
 function randomDice(max) {
   return Math.floor(Math.random() * max) + 1;
@@ -161,17 +152,20 @@ function displayResult(value) {
   resultElement.textContent = value;
 
   judgementElement.textContent = "";
+
   judgementElement.className = "judgement";
 
   const judgement = getJudgement(value);
 
   if (judgement === "critical") {
     judgementElement.textContent = "CRITICAL";
+
     judgementElement.classList.add("critical");
   }
 
   if (judgement === "fumble") {
     judgementElement.textContent = "FUMBLE";
+
     judgementElement.classList.add("fumble");
   }
 }
@@ -183,6 +177,7 @@ function rollDice() {
   resultElement.classList.add("rolling");
 
   judgementElement.textContent = "";
+
   judgementElement.className = "judgement";
 
   const timer = setInterval(() => {
@@ -200,11 +195,9 @@ function rollDice() {
   }, duration);
 }
 
-/*
- * =========================
- *  設定画面
- * =========================
- */
+/* =========================
+   設定画面
+   ========================= */
 
 function fillSettingsForm() {
   diceSidesInput.value = settings.diceSides;
@@ -233,6 +226,10 @@ function closeSettingsPanel() {
 function getNumber(input) {
   return Number(input.value);
 }
+
+/* =========================
+   設定チェック
+   ========================= */
 
 function validateSettings(newSettings) {
   if (
@@ -273,14 +270,20 @@ function validateSettings(newSettings) {
   return null;
 }
 
+/* =========================
+   設定保存
+   ========================= */
+
 async function applySettings() {
   const newSettings = {
     diceSides: getNumber(diceSidesInput),
 
     criticalMin: getNumber(criticalMinInput),
+
     criticalMax: getNumber(criticalMaxInput),
 
     fumbleMin: getNumber(fumbleMinInput),
+
     fumbleMax: getNumber(fumbleMaxInput),
   };
 
@@ -288,36 +291,54 @@ async function applySettings() {
 
   if (error) {
     settingsError.textContent = error;
+
     return;
   }
 
   settings = newSettings;
 
-  await saveSettings(settings);
+  try {
+    await saveSettings(settings);
 
-  closeSettingsPanel();
+    closeSettingsPanel();
 
-  rollDice();
+    /*
+     * 設定を変更した直後は
+     * 新しい設定で一度だけロール。
+     */
+    rollDice();
+  } catch (error) {
+    console.error("設定の保存に失敗しました。", error);
+
+    settingsError.textContent = "設定の保存に失敗しました。";
+  }
 }
 
-/*
- * =========================
- *  イベント
- * =========================
- */
+/* =========================
+   イベント
+   ========================= */
 
+/*
+ * 数字をクリックすると設定。
+ *
+ * 見た目上は普通の数字なので、
+ * 隠し機能として使える。
+ */
 resultElement.addEventListener("click", openSettings);
 
-rollButton.addEventListener("click", rollDice);
-
+/*
+ * 設定を閉じる
+ */
 closeSettings.addEventListener("click", closeSettingsPanel);
 
+/*
+ * 保存
+ */
 saveSettingsButton.addEventListener("click", applySettings);
 
 /*
  * 設定画面の外側をクリックして閉じる
  */
-
 settingsOverlay.addEventListener("click", (event) => {
   if (event.target === settingsOverlay) {
     closeSettingsPanel();
@@ -327,18 +348,15 @@ settingsOverlay.addEventListener("click", (event) => {
 /*
  * ESCで設定画面を閉じる
  */
-
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeSettingsPanel();
   }
 });
 
-/*
- * =========================
- *  起動
- * =========================
- */
+/* =========================
+   起動
+   ========================= */
 
 async function initialize() {
   try {
@@ -346,12 +364,20 @@ async function initialize() {
 
     settings = await loadSettings();
 
-    // 起動時に自動で1回振る
+    /*
+     * 起動時に自動ロール。
+     *
+     * F5でページを更新すれば
+     * もう一度ロールされる。
+     */
     rollDice();
   } catch (error) {
     console.error("IndexedDBの初期化に失敗しました。", error);
 
-    // DBが使えなくてもデフォルト設定で動作
+    /*
+     * IndexedDBが使えなくても
+     * デフォルト設定で動作。
+     */
     settings = {
       ...DEFAULT_SETTINGS,
     };

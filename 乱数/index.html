@@ -3,15 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dice Roller</title>
+    <title>Dice</title>
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
     <main class="dice-container">
+      <!-- 数字をクリックすると設定画面が開く -->
       <button id="result" class="result" aria-label="設定を開く">100</button>
-      <div id="judgement" class="judgement"></div>
 
-      <button id="rollButton" class="roll-button">ROLL</button>
+      <div id="judgement" class="judgement"></div>
     </main>
 
     <!-- 設定画面 -->
@@ -24,24 +25,31 @@
         <h1>Settings</h1>
 
         <div class="setting-item">
-          <label for="diceSides">ダイス面数</label>
+          <label for="diceSides"> ダイス面数 </label>
+
           <input id="diceSides" type="number" min="2" max="1000000" step="1" />
         </div>
 
         <div class="setting-item">
-          <label>クリティカル</label>
+          <label> クリティカル </label>
+
           <div class="range-inputs">
             <input id="criticalMin" type="number" min="1" />
+
             <span>〜</span>
+
             <input id="criticalMax" type="number" min="1" />
           </div>
         </div>
 
         <div class="setting-item">
-          <label>ファンブル</label>
+          <label> ファンブル </label>
+
           <div class="range-inputs">
             <input id="fumbleMin" type="number" min="1" />
+
             <span>〜</span>
+
             <input id="fumbleMax" type="number" min="1" />
           </div>
         </div>
