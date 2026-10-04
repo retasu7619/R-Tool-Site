@@ -387,3 +387,31 @@ async function initialize() {
 }
 
 initialize();
+
+/* =========================
+   背景ダブルタップ / ダブルクリック
+   → リロール
+   ========================= */
+
+let lastBackgroundTap = 0;
+
+document.addEventListener("pointerup", (event) => {
+  // 数字・設定画面・設定パネル上では反応させない
+  if (
+    event.target.closest("#result") ||
+    event.target.closest("#settingsOverlay")
+  ) {
+    return;
+  }
+
+  const now = Date.now();
+
+  // 300ms以内の2回のタップ/クリックをダブルタップと判定
+  if (now - lastBackgroundTap < 300) {
+    location.reload();
+
+    return;
+  }
+
+  lastBackgroundTap = now;
+});
