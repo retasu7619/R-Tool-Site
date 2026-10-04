@@ -136,6 +136,10 @@ function randomDice(max) {
   return Math.floor(Math.random() * max) + 1;
 }
 
+/* =========================
+   判定
+   ========================= */
+
 function getJudgement(value) {
   if (value >= settings.criticalMin && value <= settings.criticalMax) {
     return "critical";
@@ -148,13 +152,23 @@ function getJudgement(value) {
   return null;
 }
 
+/* =========================
+   結果表示
+   ========================= */
+
 function displayResult(value) {
   resultElement.textContent = value;
 
+  /*
+   * 前回の判定を一旦消す
+   */
   judgementElement.textContent = "";
 
   judgementElement.className = "judgement";
 
+  /*
+   * 現在の数字を判定
+   */
   const judgement = getJudgement(value);
 
   if (judgement === "critical") {
@@ -170,20 +184,40 @@ function displayResult(value) {
   }
 }
 
+/* =========================
+   ダイスロール
+   ========================= */
+
 function rollDice() {
-  const duration = 450;
+  const duration = 700;
   const interval = 50;
 
-  resultElement.classList.add("rolling");
-
+  /*
+   * ロール開始時に
+   * 判定表示を消す
+   */
   judgementElement.textContent = "";
 
   judgementElement.className = "judgement";
 
+  resultElement.classList.add("rolling");
+
+  /*
+   * 一定間隔で数字を更新。
+   *
+   * displayResult()を使うことで、
+   * ロール途中の数字にも
+   * CRITICAL / FUMBLEを表示する。
+   */
   const timer = setInterval(() => {
-    resultElement.textContent = randomDice(settings.diceSides);
+    const value = randomDice(settings.diceSides);
+
+    displayResult(value);
   }, interval);
 
+  /*
+   * 最終結果
+   */
   setTimeout(() => {
     clearInterval(timer);
 
@@ -303,8 +337,7 @@ async function applySettings() {
     closeSettingsPanel();
 
     /*
-     * 設定を変更した直後は
-     * 新しい設定で一度だけロール。
+     * 新しい設定で即ロール
      */
     rollDice();
   } catch (error) {
@@ -319,10 +352,8 @@ async function applySettings() {
    ========================= */
 
 /*
- * 数字をクリックすると設定。
- *
- * 見た目上は普通の数字なので、
- * 隠し機能として使える。
+ * 数字をクリック
+ * → 設定画面
  */
 resultElement.addEventListener("click", openSettings);
 
@@ -337,7 +368,8 @@ closeSettings.addEventListener("click", closeSettingsPanel);
 saveSettingsButton.addEventListener("click", applySettings);
 
 /*
- * 設定画面の外側をクリックして閉じる
+ * 設定画面の外側
+ * → 閉じる
  */
 settingsOverlay.addEventListener("click", (event) => {
   if (event.target === settingsOverlay) {
@@ -346,12 +378,42 @@ settingsOverlay.addEventListener("click", (event) => {
 });
 
 /*
- * ESCで設定画面を閉じる
+ * ESC
  */
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeSettingsPanel();
   }
+});
+
+/* =========================
+   背景ダブルタップ / ダブルクリック
+   → リロール
+   ========================= */
+
+let lastBackgroundTap = 0;
+
+document.addEventListener("pointerup", (event) => {
+  /*
+   * 数字や設定画面では
+   * ダブルタップ判定しない。
+   */
+  if (
+    event.target.closest("#result") ||
+    event.target.closest("#settingsOverlay")
+  ) {
+    return;
+  }
+
+  const now = Date.now();
+
+  if (now - lastBackgroundTap < 300) {
+    location.reload();
+
+    return;
+  }
+
+  lastBackgroundTap = now;
 });
 
 /* =========================
@@ -365,19 +427,17 @@ async function initialize() {
     settings = await loadSettings();
 
     /*
-     * 起動時に自動ロール。
+     * 設定を読み込んだあと
+     * すぐロール開始。
      *
-     * F5でページを更新すれば
-     * もう一度ロールされる。
+     * HTML側には初期値を
+     * 書いていないので、
+     * 「100から始まる」こともない。
      */
     rollDice();
   } catch (error) {
     console.error("IndexedDBの初期化に失敗しました。", error);
 
-    /*
-     * IndexedDBが使えなくても
-     * デフォルト設定で動作。
-     */
     settings = {
       ...DEFAULT_SETTINGS,
     };
@@ -387,31 +447,3 @@ async function initialize() {
 }
 
 initialize();
-
-/* =========================
-   背景ダブルタップ / ダブルクリック
-   → リロール
-   ========================= */
-
-let lastBackgroundTap = 0;
-
-document.addEventListener("pointerup", (event) => {
-  // 数字・設定画面・設定パネル上では反応させない
-  if (
-    event.target.closest("#result") ||
-    event.target.closest("#settingsOverlay")
-  ) {
-    return;
-  }
-
-  const now = Date.now();
-
-  // 300ms以内の2回のタップ/クリックをダブルタップと判定
-  if (now - lastBackgroundTap < 300) {
-    location.reload();
-
-    return;
-  }
-
-  lastBackgroundTap = now;
-});
